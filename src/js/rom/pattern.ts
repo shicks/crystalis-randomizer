@@ -132,6 +132,142 @@ export class Patterns implements Iterable<Pattern> {
     xxxx+o+o
     xxxxxoxo
   `);
+  
+  // Custom end size for the HP bar (with 1, 2 and 3 extra bits)
+  public static readonly HP_END_1TICK = parsePattern(`
+    ooooxxxx
+    +o+oxxxx
+    xo+oxxxx
+    +o+oxxxx
+    xo+oxxxx
+    xo+oxxxx
+    ooooxxxx
+    xxxxxxxx
+  `);
+  public static readonly HP_END_2TICK = parsePattern(`
+    ooooooxx
+    +o+o+oxx
+    xoxo+oxx
+    +o+o+oxx
+    xoxo+oxx
+    xoxo+oxx
+    ooooooxx
+    xxxxxxxx
+  `);
+  public static readonly HP_END_3TICK = parsePattern(`
+    oooooooo
+    +o+o+o+o
+    xoxoxo+o
+    +o+o+o+o
+    xoxoxo+o
+    xoxoxo+o
+    oooooooo
+    xxxxxxxx
+  `);
+
+  // Extra bar ends for when the target is missing some hp
+  public static readonly HP_END_2TICK_OUTOF_3 = parsePattern(`
+    oooooooo
+    +o+o+++o
+    xoxooo+o
+    +o+ooo+o
+    xoxooo+o
+    xoxo+++o
+    oooooooo
+    xxxxxxxx
+  `);
+  public static readonly HP_END_1TICK_OUTOF_3 = parsePattern(`
+    oooooooo
+    +o+++++o
+    xooooo+o
+    +ooooo+o
+    xooooo+o
+    xo+++++o
+    oooooooo
+    xxxxxxxx
+  `);
+  public static readonly HP_END_0TICK_OUTOF_3 = parsePattern(`
+    oooooooo
+    +++++++o
+    oooooo+o
+    oooooo+o
+    oooooo+o
+    +++++++o
+    oooooooo
+    xxxxxxxx
+  `);
+  public static readonly HP_END_1TICK_OUTOF_2 = parsePattern(`
+    ooooooxx
+    +o+++oxx
+    xooo+oxx
+    +ooo+oxx
+    xooo+oxx
+    xo+++oxx
+    ooooooxx
+    xxxxxxxx
+  `);
+  public static readonly HP_END_0TICK_OUTOF_2 = parsePattern(`
+    ooooooxx
+    +++++oxx
+    oooo+oxx
+    oooo+oxx
+    oooo+oxx
+    +++++oxx
+    ooooooxx
+    xxxxxxxx
+  `);
+  public static readonly HP_END_0TICK_OUTOF_1 = parsePattern(`
+    ooooxxxx
+    +++oxxxx
+    oo+oxxxx
+    oo+oxxxx
+    oo+oxxxx
+    +++oxxxx
+    ooooxxxx
+    xxxxxxxx
+  `);
+
+  // Custom "black bar" HP bar for displaying hp > 255
+  public static readonly SECOND_BAR_4TICK = parsePattern(`
+    oooooooo
+    +o+o+o+o
+    oooooooo
+    +o+o+o+o
+    oooooooo
+    oooooooo
+    oooooooo
+    xxxxxxxx
+  `);
+  public static readonly SECOND_BAR_3TICK = parsePattern(`
+    oooooooo
+    +o+o+o+o
+    ooooooxo
+    +o+o+o+o
+    ooooooxo
+    ooooooxo
+    oooooooo
+    xxxxxxxx
+  `);
+  public static readonly SECOND_BAR_2TICK = parsePattern(`
+    oooooooo
+    +o+o+o+o
+    ooooxoxo
+    +o+o+o+o
+    ooooxoxo
+    ooooxoxo
+    oooooooo
+    xxxxxxxx
+  `);
+  public static readonly SECOND_BAR_1TICK = parsePattern(`
+    oooooooo
+    +o+o+o+o
+    ooxoxoxo
+    +o+o+o+o
+    ooxoxoxo
+    ooxoxoxo
+    oooooooo
+    xxxxxxxx
+  `);
 }
 
 function parsePattern(data: String) : number[] {

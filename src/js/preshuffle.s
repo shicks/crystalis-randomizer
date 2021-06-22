@@ -1009,6 +1009,236 @@ Do16BitSubtractionForEXP:
   .byte $00
 .popseg
 
+;;; ----------------------------------------------------
+; [scratch] $61 - used to help calculate an offset
+; [in] y - Offset for the current enemy we are displaying health for
+EnemyHpBarStart = $60a1
+.reloc
+UpdateEnemyHPDisplay:
+  ; This is similar to what the UpdateHPDisplayInternal does
+  txa
+  pha
+    lda #$80
+    ;; TODO - if updating this proves to be laggy we can try to just
+    ;; clobber whats in here instead. (but only if rendering is disabled)
+    jsr $c72b ; WaitForNametableBufferAvailable
+    ldx #$11
+    lda #$20
+-     sta EnemyHpBarStart-1,x
+      dex
+    bpl -
+    ;; Check if the enemy has any hp, if not, just draw the clear tiles
+    ldx LastAttackedEnemyOffset
+    lda ObjectDef,x
+    and #$01
+    bpl +
+    lda ObjectHP,x
+    bne +
+    ; health bar is empty, so just draw the blank to clear out whatever is there
+    jmp DrawHealthBarUpdate
++   lda #$82 ; Ey
+    sta EnemyHpBarStart-1
+    ; divide by 16 (including the hi bit)
+    lda ObjectMaxHPHi,x
+    lsr
+    lda ObjectMaxHPLo,x
+    ror
+    lsr
+    lsr
+    lsr
+    ;; calculate what end tile to use
+    ; push the offset to draw the end tile, also transfer it to y
+    ; so we can use it during calculation
+    tay
+    pha
+      ; check if they have more than 255 hp
+      lda ObjectMaxHPHi,x
+      beq +
+      ;; more than 255 hp, so just use the normal end tile
+      lda #$8d
+      tay
+      jmp DrawEndTile
+      ;; find how much is missing from the end bar to choose the right one
++     lda ObjectHP,x
+      sta $61
+      lda ObjectMaxHPLo,x
+      ; we only care about life in the last bar, which is the value of a - y * 16
+      ; so if the offset is 0, then we don't need to y * 16 from both max and current
+      cpy #$00
+      beq FindNumberOfTicksWithHP
+      dey
+-     pha
+        lda $61
+        sec
+        sbc #$10
+        sta $61
+        ; before subtracting, check to see the current hp underflowed.
+        ; if it underflowed, then we know there is no health tiles in the last bar,
+        ; so just use empty end tiles
+        bcs +
+        pla
+        jmp UseEmptyEndTiles 
++     pla
+      sec
+      sbc #$10
+      dey
+      bpl - ; $34ce7
+FindNumberOfTicksWithHP:
+      sec
+      sbc $61
+      ; if the difference between max and current < 16 then use end tile with hp
+      ; divide the remainder by 4 to find which sub offset to use
+      cmp #$f0
+      bmi UseEmptyEndTiles
+      lsr
+      lsr
+      sta $61
+      jmp LoadEndTileFromOffset
+      ; otherwise use end tiles that are empty
+UseEmptyEndTiles:
+      lda #$03
+      sta $61
+      ; finally load from the offset table with
+      ; offset = (MaxHP % 16) / 4 * 4 + suboffset (calced above)
+LoadEndTileFromOffset:
+      lda ObjectMaxHPLo,x
+      and #$0c
+      clc
+      adc $61
+      tax
+      ldy EndBarTileTable,x
+DrawEndTile:
+    pla
+    tax
+    tya
+    sta EnemyHpBarStart,x
+    stx $61 ; save x(offset to the end tile) to $61 for combine tile logic
+
+    ; if the enemy has less than 16 hp, just skip the rest of the logic
+    cpx #$00
+    beq DrawHealthBarUpdate
+
+    ;; Empty HP tile logic
+    ; Fill the hp bar up to MaxHP with empty tiles
+    txa
+    pha
+      ; if the enemy hp has a hi bit, then we want to draw filled health bars
+      ; otherwise draw empty health bars
+      ldx LastAttackedEnemyOffset
+      lda ObjectMaxHPHi,x
+      tax
+      ldy FillEmptyBarTileTable,x
+    pla
+
+    tax
+    dex ; X == offset of the end tile, so start at the one before
+    tya
+-     sta EnemyHpBarStart,x
+      dex
+      bpl - ; $34ce7
+    
+    ;; Full HP tile logic
+    ; Divide current HP by 16 to get the offset that we want for the filled health bars.
+    ldx LastAttackedEnemyOffset
+    lda ObjectHP,x
+    lsr
+    lsr
+    lsr
+    lsr
+    ; A = offset to draw full hp bars to
+    pha
+      tax
+      ; if we have "no health" (ie: our health is too low to display full tiles)
+      ; the skip drawing any of the full bars
+      beq + ; $34d07
+      ldy LastAttackedEnemyOffset
+      lda ObjectMaxHPHi,y
+      tay
+      lda FillFullBarTileTable,y ; #$88 is the full hp bar tile
+-     sta $60a0,x
+        dex
+      bne - ; $34d01
++   pla
+
+    ;; Combining tile logic
+    ; If the fill tile index == end tile index, then we can skip this
+    ; A = offset to draw full hp bars to
+    ; $61 = offset of the end tile
+    tax
+    cpx $61
+    bne +
+    ; If (fullbar + 1) == end tile skip the combining logic
+    jmp DrawHealthBarUpdate
+
++   pha
+      ;; reload the current hp in to A and mask the low nybble to get
+      ;; which of the split hp/empty tiles to draw
+      ldx LastAttackedEnemyOffset
+      lda ObjectHP,x
+      sec
+      sbc #$01
+      bcs + ; $34d11
+        lda #$00
++     and #$0f
+      lsr
+      lsr
+      ldy ObjectMaxHPHi,x
+      sty $61
+      clc
+      ;; lazy way to add 4 to the offset if hp > 255 :P
+      adc $61
+      adc $61
+      adc $61
+      adc $61
+      tax
+    pla
+    tay
+    ;; use a precomputed lookup table to find which of the tiles should
+    ;; be used for the leftover hp (ie currentHp % 16)
+    lda CombiningBarTileTable,x
+    sta $60a1,y
+
+DrawHealthBarUpdate:
+    jsr $c43e ; DisableNMI
+    ;; write the update header information to the nametable buffer
+    ;; see the comments in WriteNametableDataToPpu for more information
+    ldx $0b ; NametableBufferWriteOffset
+    lda #$62
+    sta $6201,x
+    lda #$2b
+    sta $6200,x
+    lda #$11
+    sta $6202,x
+    lda #$a0
+    sta $6203,x
+    ;; bump the nametable buffer write head
+    txa
+    clc
+    adc #$04
+    and #$1f
+    sta $0b ; NametableBufferWriteOffset
+    lda $01
+    and #$18 ; If rendering is off, do immediate write
+    bne + ; $34d44
+      jsr $c8b2 ; ImmediateWriteNametableDataToPpu
++ pla
+  tax
+  jmp $c436 ; EnableNMI - it will do rts for us so just jmp
+
+EndBarTileTable:
+.byte $8d, $8d, $8d, $8d  ; normal end tile
+.byte $87, $87, $ed, $ed  ; 1 hp end tile
+.byte $9a, $9a, $eb, $ec  ; 2 hp end tile
+.byte $9b, $e8, $e9, $ea  ; 3 hp end tile
+FillEmptyBarTileTable:
+.byte $8c, $88 ; $8c - "empty" $88 - "full"
+FillFullBarTileTable:
+.byte $88, $f1 ; $88 - "first" $f1 - "second"
+CombiningBarTileTable:
+.byte $8b, $8a, $89, $88 ; original hp bar
+.byte $f4, $f3, $f2, $f1 ; second hp bar
+
+
 
 ;;; Crystalis should have all elements, rather than none
 ;;; Since we now invert the handling for enemy immunity,
@@ -1078,9 +1308,14 @@ Do16BitSubtractionForEXP:
     lda $62
     rol
     sta ObjectDef,y
-    rts
+    jmp UpdateEnemyHP
 ;;; NOTE: must finish before 35152
 FREE_UNTIL $9152
+
+.reloc
+UpdateEnemyHP:
+    sty LastAttackedEnemyOffset
+    jmp UpdateEnemyHPDisplay
 
 ;;; Change sacred shield to block curse instead of paralysis
 .org $92ce

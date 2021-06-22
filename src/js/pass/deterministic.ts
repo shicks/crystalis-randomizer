@@ -157,6 +157,8 @@ export function deterministic(rom: Rom, flags: FlagSet): void {
 
   useNewStatusBarGraphics(rom);
 
+  useEnemyHPBarGraphics(rom);
+
 }
 
 // Updates a few itemuse and trigger actions in light of consolidation
@@ -170,6 +172,25 @@ function useNewStatusBarGraphics(rom: Rom): void {
   rom.patterns.set(page, 0x4, Patterns.HUD_DL);
   rom.patterns.set(page, 0x5, Patterns.HUD_MP);
   rom.patterns.set(page, 0x6, Patterns.HUD_EX);
+}
+
+// Replaces some unused tiles with custom HP bar tiles
+// NOTE: This needs the new status bar patch applied to free up tiles
+function useEnemyHPBarGraphics(rom: Rom): void {
+  const page = 0x38 << 6
+  rom.patterns.set(page, 0x07, Patterns.HP_END_1TICK);
+  rom.patterns.set(page, 0x1a, Patterns.HP_END_2TICK);
+  rom.patterns.set(page, 0x1b, Patterns.HP_END_3TICK);
+  rom.patterns.set(page, 0x68, Patterns.HP_END_2TICK_OUTOF_3);
+  rom.patterns.set(page, 0x69, Patterns.HP_END_1TICK_OUTOF_3);
+  rom.patterns.set(page, 0x6a, Patterns.HP_END_0TICK_OUTOF_3);
+  rom.patterns.set(page, 0x6b, Patterns.HP_END_1TICK_OUTOF_2);
+  rom.patterns.set(page, 0x6c, Patterns.HP_END_0TICK_OUTOF_2);
+  rom.patterns.set(page, 0x6d, Patterns.HP_END_0TICK_OUTOF_1);
+  rom.patterns.set(page, 0x71, Patterns.SECOND_BAR_4TICK);
+  rom.patterns.set(page, 0x72, Patterns.SECOND_BAR_3TICK);
+  rom.patterns.set(page, 0x73, Patterns.SECOND_BAR_2TICK);
+  rom.patterns.set(page, 0x74, Patterns.SECOND_BAR_1TICK);
 }
 
 // Updates a few itemuse and trigger actions in light of consolidation
