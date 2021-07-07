@@ -43229,6 +43229,8 @@ LoadPalettesForLocation
         ;; Prepares a write of palettes indexed by $7e0..$7e7.
         $34c0e  xx xx:      xxx #$xx
         $34c10  xx xx:      xxx $xx
+LoadPalettesForCustomLocation
+        ;; When changing screens, some will set $11 before jmping straight to this location
         $34c12  xx xx:      xxx $xx
         $34c14  xx:         xxx
         $34c15  xx:          xxx
@@ -43271,8 +43273,8 @@ LoadPalettesForLocation
         $34c55  xx xx:      xxx $xx
 -       $34c57  xx xx:      xxx $xx
         $34c59  xx:         xxx
-        $34c5a  xx xx xx:   xxx $3c176
-        $34c5d  xx xx xx:   xxx $34c12
+        $34c5a  xx xx xx:   xxx WaitForMultipleOAMDMA
+        $34c5d  xx xx xx:   xxx LoadPalettesForCustomLocation
         $34c60  xx xx:      xxx $xx
         $34c62  xx:         xxx
         $34c63  xx xx:      xxx $xx
@@ -46388,7 +46390,7 @@ DataTable_362ac
 ;;; This is called by $3cd28 using $4a0,x:7f as the index.
 ;;; Note that entries $60..$6f are on a different page.
 ;;; STRIP: word=$2c000
-ObjectActionJumpTable
+ Table
         $36314              .word ($xxxx)
         $36316              .word ($35b45) ; 01
         $36318              .word ($35d81) ; 02
@@ -60654,13 +60656,16 @@ FallIntoPit
         $3e60c  xx xx:      xxx #$xx
         $3e60e  xx xx xx:   xxx $34c49
 ;;; --------------------------------
+ClearAllObjectsOnLocationChange
         $3e611  xx xx:      xxx #$xx ; 34000 -> 8000
         $3e613  xx xx xx:   xxx BankSwitch8k_8000
+        ;; This seems to load a specific palette?
         $3e616  xx xx:      xxx #$xx
         $3e618  xx xx xx:   xxx $34c3d
+        ;; Loops through all the objects and writes 0 to the ObjectActionScript
         $3e61b  xx xx:      xxx #$xx
         $3e61d  xx xx:      xxx #$xx
--       $3e61f  xx xx xx:   xxx $xxxx,x
+-       $3e61f  xx xx xx:   xxx ObjectActionScript,x
         $3e622  xx:         xxx
         $3e623  xx xx:      xxx #$xx
         $3e625  xx xx:      xxx - ; $3e61f

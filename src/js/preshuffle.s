@@ -913,6 +913,30 @@ UpdateCurrentEXPAndExit:
 
 .org $91f4
 ExitWithoutDrawingEXP:
+  jsr UpdateEnemyHpAndPlaySFX 
+  rts
+.assert * <= $91fa ; StartMonsterDeathAnimation
+
+.reloc
+UpdateEnemyHpAndPlaySFX:
+  jsr UpdateEnemyHPDisplay
+  lda #SFX_MONSTER_HIT
+  jsr StartAudioTrack
+  rts
+
+.org $92f5 ; RemoveObjectY
+  
+.assert * <= $92fb
+
+.reloc
+RemoveObjectYAndUpdateEnemyHP:
+  lda #$00
+  sta ObjectActionScript,y
+  ; if the last attacked enemy is getting cleared out then we want to update the HP display
+  cpy LastAttackedEnemyOffset
+  bne +
+    jsr UpdateEnemyHPDisplay
++ rts
 
 .org $8cc0
 UpdateHPDisplayInternal:
@@ -1029,13 +1053,17 @@ UpdateEnemyHPDisplay:
     bpl -
     ;; Check if the enemy has any hp, if not, just draw the clear tiles
     ldx LastAttackedEnemyOffset
-    lda ObjectDef,x
+    lda ObjectActionScript,x
+    ; When an enemy dies, ObjectActionScript is set to zero (after the animation ends) 
+    bne +
+      jmp DrawHealthBarUpdate
++   lda ObjectDef,x
     and #$01
     bpl +
-    lda ObjectHP,x
-    bne +
-    ; health bar is empty, so just draw the blank to clear out whatever is there
-    jmp DrawHealthBarUpdate
+      lda ObjectHP,x
+      bne +
+      ; health bar is empty, so just draw the blank to clear out whatever is there
+        jmp DrawHealthBarUpdate
 +   lda #$82 ; Ey
     sta EnemyHpBarStart-1
     ; divide by 16 (including the hi bit)
