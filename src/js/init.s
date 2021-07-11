@@ -81,6 +81,7 @@ ObjectExp = $520
 ; starting at zero and counting up to ExpToNextLevel, it will start at ExpToNextLevel
 ; and count down.
 PlayerExp = $704
+LastAttackedEnemyOffset = $706 ; replaces PlayerMaxExp
 PlayerMP = $708
 PlayerMaxMP = $709
 EquippedConsumableItem = $715
@@ -100,6 +101,9 @@ ShouldRedisplayDifficulty = $61ff
         
 SelectedConsumableIndex = $642c
 SelectedQuestItemIndex  = $642e
+
+ObjectMaxHPLo = $6a00
+ObjectMaxHPHi = $6a20
 
 .ifdef _EXTRA_PITY_MP
 PITY_MP_AMOUNT    = 34

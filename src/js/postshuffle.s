@@ -142,6 +142,12 @@ RescaleDefAndHP:
     sec
 +  rol ObjectDef,x
    sta ObjectHP,x
+   ;; Store the calculated Max HP into a different RAM location
+   ;; for the enemy HP bar calculations
+   sta ObjectMaxHPLo,x
+   lda ObjectDef,x
+   and #$01
+   sta ObjectMaxHPHi,x
 RescaleAtk:   ; $1bc63
   ;; DiffDef = 4 * PDef
   ;; DiffHP = PHP
