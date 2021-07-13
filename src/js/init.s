@@ -63,6 +63,25 @@
 .segment "23"   :bank $23 :size $2000 :off $48000 :mem $a000
 
 
+
+PPUCTRL   = $2000
+PPUMASK   = $2001
+PPUSTATUS = $2002
+OAMADDR   = $2003
+OAMDATA   = $2004
+PPUSCROLL = $2005
+PPUADDR   = $2006
+PPUDATA   = $2007
+OAMDMA    = $4014
+
+BANKSELECT = $8000
+BANKDATA   = $8001
+IRQLATCH   = $c000
+IRQRELOAD  = $c001
+IRQDISABLE = $e000
+IRQENABLE  = $e001
+
+
 ;;; Various global definitions.
 GameMode = $41
 ObjectRecoil = $340
